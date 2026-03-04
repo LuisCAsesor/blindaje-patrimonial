@@ -10,7 +10,7 @@ st.subheader("Por: Luis Alvarado")
 st.write("Optimiza tus gastos y asegura que tu estilo de vida nunca tenga fecha de caducidad.")
 
 # Configurar la API de Gemini (Aquí pondrás tu llave)
-genai.configure(api_key="AIzaSyDc_qRXrBRZgPmlbH5m12Xw0JeU8Y8_7Bs")
+genai.configure(api_key=st.secrets["AIzaSyDc_qRXrBRZgPmlbH5m12Xw0JeU8Y8_7Bs"])
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 # Área de entrada de datos
@@ -42,4 +42,5 @@ if st.button("Generar Diagnóstico de Blindaje"):
             
             st.success("¡Análisis completado! Si quieres profundizar en este diagnóstico, solicita una asesoría de 15 minutos con Luis.")
     else:
+
         st.warning("Por favor, ingresa algunos datos para poder ayudarte.")
