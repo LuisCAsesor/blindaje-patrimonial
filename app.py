@@ -11,7 +11,7 @@ st.write("Optimiza tus gastos y asegura que tu estilo de vida nunca tenga fecha 
 
 # Configurar la API de Gemini (Aquí pondrás tu llave)
 genai.configure(api_key=st.secrets["TU_API_KEY_AQUI"])
-model = genai.GenerativeModel('gemini-1.5-flash-latest')
+model = genai.GenerativeModel('gemini-2.0-flash')
 
 # Área de entrada de datos
 st.info("Copia y pega los movimientos de tu estado de cuenta aquí abajo. Tu información es procesada de forma privada.")
@@ -44,5 +44,6 @@ if st.button("Generar Diagnóstico de Blindaje"):
     else:
 
         st.warning("Por favor, ingresa algunos datos para poder ayudarte.")
+
 
 
