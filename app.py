@@ -4,48 +4,53 @@ import google.generativeai as genai
 # 1. Configuración de la página
 st.set_page_config(page_title="Analizador de Blindaje Patrimonial", page_icon="🛡️")
 
-# 2. Conexión con la IA (Actualizado a Gemini 3 Flash)
-genai.configure(api_key=st.secrets["TU_API_KEY_AQUI"])
-# Usamos el modelo más potente y rápido de 2026
-model = genai.GenerativeModel('gemini-3-flash')
+# 2. Conexión con la IA (Ajuste de nombre de modelo)
+try:
+    genai.configure(api_key=st.secrets["TU_API_KEY_AQUI"])
+    # Usamos el nombre de modelo más compatible para evitar el error 404
+    model = genai.GenerativeModel('gemini-1.5-flash')
+except Exception as e:
+    st.error("Error de configuración inicial. Revisa tu API Key en Secrets.")
 
 # 3. Interfaz de la aplicación
 st.title("🛡️ Analizador de Blindaje Patrimonial")
 st.subheader("Por: Luis Alvarado")
-st.write("Optimiza tus gastos y asegura que tu estilo de vida nunca tenga fecha de caducidad.")
+st.write("Detecta fugas de dinero y asegura que tu retiro no dependa de la caridad.")
 
 # 4. Entradas del usuario
-st.info("Tu información es procesada de forma privada y segura.")
+st.info("Tu información es privada. La IA solo analiza los números para ayudarte.")
 edad = st.number_input("1. ¿Qué edad tienes actualmente?", min_value=18, max_value=75, value=30)
-user_input = st.text_area("2. Copia y pega tus movimientos o describe tus gastos del mes:", 
+user_input = st.text_area("2. Pega aquí tus gastos del mes o movimientos:", 
                          placeholder="Ejemplo: Renta 8000, Despensa 4000, Netflix 200, Seguro de Auto 1200...")
 
 # 5. Botón de análisis
-if st.button("Generar Diagnóstico de Blindaje"):
+if st.button("Generar Diagnóstico"):
     if user_input:
-        with st.spinner("Gemini 3 está analizando tu blindaje..."):
+        with st.spinner("Analizando tu Blindaje Patrimonial..."):
             prompt = f"""
-            Actúa como Luis Alvarado, experto en Blindaje Patrimonial. 
-            El usuario tiene {edad} años. Analiza estos gastos: {user_input}
+            Eres Luis Alvarado, experto financiero. El usuario tiene {edad} años. 
+            Analiza estos gastos: {user_input}
 
-            Estructura tu respuesta:
-            1. CLASIFICACIÓN RAG: Separa en ROJOS (fugas), AMARILLOS (ajustables) y VERDES (vitales).
-            2. EL COSTO DEL TIEMPO: Explícale al usuario de {edad} años que si empieza a los 25 junta $11,038,000, pero a los 45 solo $1,576,000. Calcula cuántos millones pierde por no actuar hoy.
-            3. SALUD FINANCIERA: Usa la regla 50-30-20 y advierte que el 61% de los mexicanos dependen de otros al jubilarse.
-            4. PARADOJA DEL METAL: Si hay seguros de auto, dile que asegura el 'metal' pero no su libertad.
-            5. CIERRE: Invítalo a una asesoría de 15 minutos.
+            Genera un reporte con:
+            1. CLASIFICACIÓN RAG: Clasifica en ROJOS (fugas), AMARILLOS (ajustables) y VERDES (vitales).
+            2. EL COSTO DEL TIEMPO: Como tiene {edad} años, explícale cuánto pierde por esperar. 
+               Usa el dato: a los 25 años juntas $11,038,000, pero a los 45 solo $1,576,000.
+               Dile cuántos millones está 'quemando' por cada año que no actúa.
+            3. REALIDAD DEL RETIRO: Menciona que el 61% de los mexicanos dependen de otros al jubilarse.
+            4. REGLA 50-30-20: Evalúa su salud financiera actual.
+            5. EL METAL: Si hay seguros de auto, dile que asegura el metal pero no su vida.
             """
             
             try:
                 response = model.generate_content(prompt)
                 st.markdown("---")
                 st.markdown(response.text)
-                st.success("¡Diagnóstico completado!")
+                st.success("¡Diagnóstico listo! El tiempo es dinero.")
             except Exception as e:
-                st.error(f"Error técnico: {e}. Intenta de nuevo en 60 segundos.")
+                st.error("El sistema está saturado. Intenta de nuevo en 30 segundos.")
     else:
-        st.warning("Por favor, ingresa tus gastos.")
+        st.warning("Por favor, ingresa algunos datos para analizar.")
 
 # Pie de página
 st.markdown("---")
-st.caption("© 2026 Luis Alvarado - Consultoría en Blindaje Patrimonial.")
+st.caption("© 2026 Luis Alvarado | Consultor Financiero")
