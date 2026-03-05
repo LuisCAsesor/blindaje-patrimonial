@@ -12,7 +12,7 @@ try:
     genai.configure(api_key=api_key)
     
     # Usamos el nombre del modelo sin prefijos para mayor compatibilidad
-    model = genai.GenerativeModel('gemini-1.5-flash')
+model = gen_ai.GenerativeModel(model_name="gemini-1.5-flash-latest")
 except Exception as e:
     st.error(f"Error de configuración: {e}")
 
@@ -56,6 +56,7 @@ if st.button("¡Generar mi Diagnóstico!"):
                 except:
                     st.error(f"Error de conexión con Google: {e}")
                     st.info("Sugerencia: Genera una NUEVA API Key en Google AI Studio, a veces las llaves se 'ciclan'.")
+
 
 
 
