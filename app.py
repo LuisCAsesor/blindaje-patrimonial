@@ -56,3 +56,4 @@ if st.button("¡Generar mi Diagnóstico!"):
                 except:
                     st.error(f"Error de conexión con Google: {e}")
                     st.info("Sugerencia: Genera una NUEVA API Key en Google AI Studio, a veces las llaves se 'ciclan'.")
+
