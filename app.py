@@ -1,62 +1,50 @@
 import streamlit as st
 import google.generativeai as genai
-import os
 
 # 1. Configuración de la página
-st.set_page_config(page_title="Analizador de Blindaje", page_icon="🛡️")
+st.set_page_config(page_title="Blindaje Patrimonial", layout="centered")
 
-# 2. Inicialización Blindada
+# 2. Obtener la API Key desde los "Secrets" de Streamlit
+# Asegúrate de haberla guardado en el Dashboard de Streamlit como GOOGLE_API_KEY
+api_key = st.secrets.get("GOOGLE_API_KEY")
+
+if not api_key:
+    st.error("⚠️ No se encontró la API Key. Configúrala en los Secrets de Streamlit.")
+    st.stop()
+
+# 3. Configurar el SDK de Google
+genai.configure(api_key=api_key)
+
+# 4. Inicializar el modelo (Usando el nombre más estable para evitar el error 404)
 try:
-    # Forzamos la configuración limpia
-    api_key = st.secrets["TU_API_KEY_AQUI"]
-    genai.configure(api_key=api_key)
-    
-    # Usamos el nombre del modelo sin prefijos para mayor compatibilidad
-model = gen_ai.GenerativeModel(model_name="gemini-1.5-flash-latest")
+    # Usamos 'gemini-1.5-flash' que es rápido y eficiente para diagnósticos
+    model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
-    st.error(f"Error de configuración: {e}")
+    st.error(f"Error al cargar el modelo: {e}")
 
-# 3. Interfaz
-st.title("🛡️ Analizador de Blindaje Patrimonial")
-st.subheader("Por: Luis Alvarado")
-st.write("Tu herramienta para no ser parte del 61% que depende de otros al jubilarse.")
+# 5. Interfaz de la Aplicación
+st.title("🛡️ Diagnóstico de Blindaje Patrimonial")
+st.write("Bienvenido. Completa los datos para generar tu análisis.")
 
-# 4. Entradas
-edad = st.number_input("¿Qué edad tienes?", min_value=18, max_value=75, value=30)
-user_input = st.text_area("Pega tus gastos o movimientos aquí:")
+# Ejemplo de input para tu diagnóstico
+user_input = st.text_area("Describe tu situación patrimonial actual:")
 
-# 5. Ejecución con manejo de errores mejorado
 if st.button("¡Generar mi Diagnóstico!"):
     if user_input:
-        with st.spinner("Conectando con la IA de Blindaje..."):
+        with st.spinner("Analizando con IA..."):
             try:
-                # Instrucciones precisas de la metodología Luis Alvarado
-                prompt = f"""
-                Eres Luis Alvarado, experto financiero. El usuario tiene {edad} años. 
-                Analiza estos gastos: {user_input}
+                # Generar contenido
+                response = model.generate_content(
+                    f"Actúa como un experto en blindaje patrimonial. "
+                    f"Analiza lo siguiente y da recomendaciones claras: {user_input}"
+                )
                 
-                1. SEMÁFORO RAG: Clasifica en ROJOS (fugas), AMARILLOS (ajustables) y VERDES (vitales).
-                2. COSTO DEL TIEMPO: Explícale cuánto pierde por esperar (25 años vs 45 años = $9.4 millones de diferencia).
-                3. REGLA 50-30-20: Evalúa su salud financiera actual.
-                4. EL METAL: Si hay seguros de auto, dile que asegura el metal pero no su libertad.
-                5. RETIRO: Menciona que el 61% de los mexicanos dependen de otros al jubilarse.
-                """
-                
-                response = model.generate_content(prompt)
-                st.markdown("---")
-                st.write(response.text)
+                st.subheader("Tu Diagnóstico:")
+                st.markdown(response.text)
                 
             except Exception as e:
-                # Si el error 404 persiste, intentamos una ruta alternativa automáticamente
-                st.warning("Reintentando conexión por vía alterna...")
-                try:
-                    alt_model = genai.GenerativeModel('gemini-1.5-pro')
-                    response = alt_model.generate_content(prompt)
-                    st.write(response.text)
-                except:
-                    st.error(f"Error de conexión con Google: {e}")
-                    st.info("Sugerencia: Genera una NUEVA API Key en Google AI Studio, a veces las llaves se 'ciclan'.")
-
-
-
-
+                st.error("Hubo un problema con la conexión:")
+                st.info(f"Detalle técnico: {e}")
+                st.warning("Sugerencia: Revisa si tu API Key en AI Studio tiene cuota disponible.")
+    else:
+        st.warning("Por favor, ingresa alguna información para el análisis.")
