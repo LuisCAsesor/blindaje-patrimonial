@@ -6,6 +6,11 @@ st.set_page_config(page_title="Analizador de Blindaje Patrimonial - Luis Alvarad
 
 # Título e Imagen de marca
 st.title("🛡️ Analizador de Blindaje Patrimonial")
+# Nuevo campo para que el cliente ponga su edad
+edad = st.number_input("1. ¿Qué edad tienes actualmente?", min_value=18, max_value=75, value=30)
+
+# El cuadro de texto que ya tenías (solo asegúrate de que esté debajo)
+user_input = st.text_area("2. Copia y pega tus movimientos o describe tus gastos:")
 st.subheader("Por: Luis Alvarado")
 st.write("Optimiza tus gastos y asegura que tu estilo de vida nunca tenga fecha de caducidad.")
 
@@ -22,6 +27,16 @@ if st.button("Generar Diagnóstico de Blindaje"):
         with st.spinner("Analizando tus finanzas con la metodología de Luis Alvarado..."):
             # El "Prompt" con tu metodología
             prompt = f"""
+Actúa como un experto en Blindaje Patrimonial. El usuario tiene {edad} años. 
+Analiza estos movimientos: {user_input}
+
+Instrucciones obligatorias:
+1. Clasifica en Gastos Rojos (fugas), Amarillos (ajustables) y Verdes (vitales).
+2. Calcula el impacto del tiempo: Si el usuario tiene {edad} años, explícale cuánto dinero está dejando de ganar por cada año que no inicia su blindaje.
+3. Usa la estadística: A los 25 años se pueden juntar $11,038,000, pero a los 45 solo $1,576,000.
+4. Menciona que el 61% de los mexicanos llegan a la vejez dependiendo de terceros si no aplican la regla 50-30-20.
+5. Si detectas gastos de seguro de auto, dile que asegura el 'metal' pero no su libertad.
+"""
             Actúa como un experto en Blindaje Patrimonial siguiendo la metodología de Luis Alvarado.
             Analiza los siguientes gastos y genera un reporte estructurado:
             
@@ -44,6 +59,7 @@ if st.button("Generar Diagnóstico de Blindaje"):
     else:
 
         st.warning("Por favor, ingresa algunos datos para poder ayudarte.")
+
 
 
 
