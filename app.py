@@ -1,50 +1,63 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 1. Configuración de la página
 st.set_page_config(page_title="Blindaje Patrimonial", layout="centered")
 
-# 2. Obtener la API Key desde los "Secrets" de Streamlit
-# Asegúrate de haberla guardado en el Dashboard de Streamlit como GOOGLE_API_KEY
+# Configuración de API
 api_key = st.secrets.get("GOOGLE_API_KEY")
 
 if not api_key:
-    st.error("⚠️ No se encontró la API Key. Configúrala en los Secrets de Streamlit.")
+    st.error("⚠️ Falta la API Key en los Secrets de Streamlit.")
     st.stop()
 
-# 3. Configurar el SDK de Google
+# ESTA LÍNEA ES CLAVE PARA QUITAR EL ERROR 404
 genai.configure(api_key=api_key)
 
-# 4. Inicializar el modelo (Usando el nombre más estable para evitar el error 404)
+# Inicializamos el modelo de forma segura
 try:
-    # Usamos 'gemini-1.5-flash' que es rápido y eficiente para diagnósticos
+    # Usamos el nombre exacto que pide la API estable
     model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
-    st.error(f"Error al cargar el modelo: {e}")
+    st.error(f"Error al configurar el modelo: {e}")
 
-# 5. Interfaz de la Aplicación
 st.title("🛡️ Diagnóstico de Blindaje Patrimonial")
-st.write("Bienvenido. Completa los datos para generar tu análisis.")
+st.write("Calcula tu situación actual y el impacto del tiempo en tu dinero.")
 
-# Ejemplo de input para tu diagnóstico
-user_input = st.text_area("Describe tu situación patrimonial actual:")
+# --- NUEVOS CAMPOS ---
+col1, col2 = st.columns(2)
+with col1:
+    edad = st.number_input("Tu edad actual:", min_value=18, max_value=100, value=30)
+with col2:
+    monto_ahorro = st.number_input("Ahorro actual (estimado):", min_value=0, value=15000)
+
+user_input = st.text_area("Describe otros activos (casa, ropa, juguetes, etc.):")
 
 if st.button("¡Generar mi Diagnóstico!"):
     if user_input:
-        with st.spinner("Analizando con IA..."):
+        with st.spinner("Calculando impacto financiero..."):
             try:
-                # Generar contenido
-                response = model.generate_content(
-                    f"Actúa como un experto en blindaje patrimonial. "
-                    f"Analiza lo siguiente y da recomendaciones claras: {user_input}"
-                )
+                # Prompt diseñado para calcular "dinero perdido" por inflación/falta de blindaje
+                prompt = f"""
+                Actúa como un experto en blindaje patrimonial y finanzas.
+                Datos del cliente:
+                - Edad: {edad} años.
+                - Ahorros: {monto_ahorro} USD (o moneda local).
+                - Otros activos: {user_input}
                 
-                st.subheader("Tu Diagnóstico:")
+                Objetivo:
+                1. Calcula cuánto dinero ha perdido este cliente por inflación en los últimos 5 años si ese ahorro no estuvo blindado.
+                2. Proyecta cuánto perderá en los próximos 10 años si no toma acción.
+                3. Da un diagnóstico de blindaje basado en su edad ({edad} años).
+                """
+                
+                response = model.generate_content(prompt)
+                
+                st.subheader("📊 Análisis de Pérdida y Blindaje")
                 st.markdown(response.text)
                 
             except Exception as e:
-                st.error("Hubo un problema con la conexión:")
-                st.info(f"Detalle técnico: {e}")
-                st.warning("Sugerencia: Revisa si tu API Key en AI Studio tiene cuota disponible.")
+                # Si el error 404 vuelve a salir, es por la versión de la librería
+                st.error("Error de comunicación con la IA.")
+                st.info(f"Detalle: {e}")
     else:
-        st.warning("Por favor, ingresa alguna información para el análisis.")
+        st.warning("Por favor, describe tus activos para el análisis.")
