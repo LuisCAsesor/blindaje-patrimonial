@@ -27,15 +27,16 @@ if st.button("Generar Diagnóstico de Blindaje"):
         with st.spinner("Analizando tus finanzas con la metodología de Luis Alvarado..."):
             # El "Prompt" con tu metodología
             prompt = f"""
+prompt = f"""
 Actúa como un experto en Blindaje Patrimonial. El usuario tiene {edad} años. 
-Analiza estos movimientos: {user_input}
+Analiza los siguientes movimientos de su estado de cuenta: {user_input}
 
-Instrucciones obligatorias:
-1. Clasifica en Gastos Rojos (fugas), Amarillos (ajustables) y Verdes (vitales).
-2. Calcula el impacto del tiempo: Si el usuario tiene {edad} años, explícale cuánto dinero está dejando de ganar por cada año que no inicia su blindaje.
-3. Usa la estadística: A los 25 años se pueden juntar $11,038,000, pero a los 45 solo $1,576,000.
-4. Menciona que el 61% de los mexicanos llegan a la vejez dependiendo de terceros si no aplican la regla 50-30-20.
-5. Si detectas gastos de seguro de auto, dile que asegura el 'metal' pero no su libertad.
+Instrucciones para tu reporte:
+1. Clasifica los gastos en: Rojos (fugas de dinero), Amarillos (ajustables) y Verdes (vitales).
+2. Explícale al usuario de {edad} años cuánto dinero está perdiendo por el factor tiempo. 
+3. Usa la estadística: A los 25 años se pueden juntar $11,038,000, pero a los 45 solo $1,576,000. 
+4. Recuérdale que el 61% de los mexicanos llegan a la vejez dependiendo de terceros si no aplican la regla 50-30-20.
+5. Si ves un seguro de auto, dile que 'asegura el metal' pero no su libertad financiera.
 """
             Actúa como un experto en Blindaje Patrimonial siguiendo la metodología de Luis Alvarado.
             Analiza los siguientes gastos y genera un reporte estructurado:
@@ -59,6 +60,7 @@ Instrucciones obligatorias:
     else:
 
         st.warning("Por favor, ingresa algunos datos para poder ayudarte.")
+
 
 
 
