@@ -58,3 +58,4 @@ if st.button("¡Generar mi Diagnóstico!"):
                     st.info("Sugerencia: Genera una NUEVA API Key en Google AI Studio, a veces las llaves se 'ciclan'.")
 
 
+
