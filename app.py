@@ -7,13 +7,26 @@ st.set_page_config(page_title="IA Blindaje Patrimonial", page_icon="🛡️")
 
 # --- CONEXIÓN SEGURA CON GEMINI ---
 try:
-    API_KEY = st.secrets["API_KEY"]
-    genai.configure(api_key=API_KEY)
-    # Nombre de modelo estándar para evitar error 404
-    model = genai.GenerativeModel('gemini-1.5-flash')
-except Exception as e:
-    st.error("⚠️ Error de Configuración: Revisa que la API_KEY esté en los Secrets de Streamlit.")
-    st.stop()
+            with st.spinner("Generando tu Blindaje Patrimonial..."):
+                # Forzamos la generación con el modelo base
+                response = model.generate_content(prompt)
+                
+                if response.text:
+                    st.markdown("---")
+                    st.markdown(response.text)
+                else:
+                    st.warning("La IA no devolvió respuesta. Revisa tu cuota en Google AI Studio.")
+                    
+        except Exception as e:
+            # Si vuelve a fallar el 404, intentamos con el modelo Pro automáticamente
+            st.warning("Intentando con modelo alternativo por error de ruta...")
+            try:
+                model_alt = genai.GenerativeModel('gemini-pro')
+                response = model_alt.generate_content(prompt)
+                st.markdown(response.text)
+            except:
+                st.error(f"Error persistente de Google API: {e}")
+                st.info("Verifica en AI Studio que tu API KEY tenga habilitado 'Gemini 1.5 Flash'.")
 
 st.title("🛡️ Diagnóstico de Blindaje Patrimonial")
 st.markdown("_El secreto para que tu estilo de vida nunca tenga fecha de caducidad._")
@@ -110,3 +123,4 @@ if enviar:
                 
         except Exception as e:
             st.error(f"Error al conectar con la IA: {e}")
+
