@@ -41,22 +41,32 @@ with st.form("my_form"):
     submit = st.form_submit_button("Generar Diagnóstico")
 
 if submit:
-    # Lógica de deuda (Página 7) [cite: 59, 60, 61, 62]
-    pct_deuda = (deuda_anual / ingreso_anual) * 100 if ingreso_anual > 0 else 0
-    nivel_deuda = "Controlada" if pct_deuda < 30 else "Alarma" if pct_deuda <= 60 else "Peligrosa"
-    
-    prompt = f"""
-    Genera un diagnóstico financiero para {nombre} de {edad} años.
-    Datos: Ingreso ${ingreso_anual}, Ahorro ${ahorro_anual}, Deuda {nivel_deuda} ({pct_deuda}%).
-    Seguros: Auto:{t_auto}, Vida:{t_vida}, Retiro:{t_retiro}.
-    Gastos RAG: Verde ${g_verde}, Amarillo ${g_amarillo}, Rojo ${g_rojo}.
-    
-    Usa estas reglas:
-    - Si tiene seguro de auto pero no de vida o retiro, dile que 'asegura el metal pero no su libertad'[cite: 190, 192].
-    - Menciona que para 2050 habrá 36 millones de adultos mayores[cite: 24, 25].
-    - Usa la regla 50-30-20 para recomendar ahorro[cite: 63, 65].
-    """
-    
-    res = model.generate_content(prompt)
-    st.markdown(res.text)
-
+    # Validaciones básicas de ingresos [cite: 67]
+    if ingreso_anual <= 0:
+        st.warning("Por favor, ingresa un ingreso anual válido para realizar el cálculo.")
+    else:
+        # Lógica de deuda basada en niveles de control [cite: 59, 60, 61, 62]
+        pct_deuda = (deuda_anual / ingreso_anual) * 100
+        nivel_deuda = "Controlada" if pct_deuda < 30 else "Alarma" if pct_deuda <= 60 else "Peligrosa"
+        
+        prompt = f"""
+        Genera un diagnóstico financiero para {nombre} de {edad} años.
+        Datos: Ingreso ${ingreso_anual}, Ahorro ${ahorro_anual}, Deuda {nivel_deuda} ({pct_deuda:.1f}%).
+        Seguros: Auto:{t_auto}, Vida:{t_vida}, Retiro:{t_retiro}.
+        Gastos RAG: Verde ${g_verde}, Amarillo ${g_amarillo}, Rojo ${g_rojo}.
+        
+        Usa estas reglas del Blindaje Patrimonial:
+        - Si tiene seguro de auto pero no de vida o retiro, dile que 'asegura el metal pero no su libertad'[cite: 190, 192].
+        - Menciona que para 2050 habrá 36 millones de adultos mayores y la mayoría dependerá de otros[cite: 3, 18, 25].
+        - Aplica la regla 50-30-20 para recomendar ahorro e inversión[cite: 63, 65].
+        - Explica que el retiro es una certeza, mientras que un accidente es solo probabilidad.
+        """
+        
+        try:
+            with st.spinner("Consultando a tu asesor de IA..."):
+                res = model.generate_content(prompt)
+                st.markdown("### 📊 Tu Diagnóstico Personalizado")
+                st.markdown(res.text)
+        except Exception as e:
+            st.error(f"Hubo un problema con la conexión a la IA. Error: {e}")
+            st.info("Revisa que tu API_KEY sea válida y que tengas cuota disponible en Google AI Studio.")
