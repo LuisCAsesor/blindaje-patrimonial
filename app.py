@@ -1,60 +1,47 @@
 import streamlit as st
-import requests
+import google.generativeai as genai
 
-# 1. Configuración de Estilo y Página
-st.set_page_config(page_title="Blindaje Patrimonial", page_icon="🛡️")
+# Configura tu API Key (En producción usa st.secrets)
+genai.configure(api_key="TU_API_KEY_AQUÍ")
+model = genai.GenerativeModel('gemini-1.5-flash')
+
 st.title("🛡️ Diagnóstico de Blindaje Patrimonial")
 
-# 2. Credenciales (Asegúrate de que el nombre coincida en tu Dashboard de Streamlit)
-API_KEY = st.secrets.get("GOOGLE_API_KEY")
+# --- SECCIÓN 1: DATOS PERSONALES ---
+nombre = st.text_input("Nombre Completo")
+edad = st.number_input("Edad", min_value=18, max_value=100)
+ingreso_mensual = st.number_input("Ingresos Mensuales ($)", min_value=0)
 
-# 3. Interfaz de Usuario
-col1, col2 = st.columns(2)
-with col1:
-    edad = st.number_input("Tu edad actual:", min_value=18, max_value=100, value=37)
-with col2:
-    monto_ahorro = st.number_input("Dinero en efectivo/ahorro (USD):", min_value=0, value=1000)
+# --- SECCIÓN 2: INSTRUMENTOS ---
+st.subheader("Tus Seguros e Instrumentos")
+seguros = st.multiselect("Selecciona lo que ya tienes:", 
+    ["Seguro de Auto", "Seguro de Gastos Médicos", "Seguro de Vida", "PPR / Afore", "Inversiones"])
 
-activos = st.text_area("Describe otros activos (casa, negocio, bienes, etc.):", 
-                       placeholder="Ej: Casa 100k, Negocio de ropa, 2 autos...")
+# --- SECCIÓN 3: GASTOS Y DEUDA ---
+st.subheader("Tus Finanzas")
+gastos_fijos = st.number_input("Gastos Necesarios (Renta, Súper, Servicios)", min_value=0)
+gastos_variables = st.number_input("Gastos Variables (Starbucks, Salidas, Ocio)", min_value=0)
+pago_deudas = st.number_input("Monto mensual para pagar deudas", min_value=0)
 
-if st.button("¡Generar mi Diagnóstico!"):
-    if not API_KEY:
-        st.error("❌ Error: No se encontró la API Key en los Secrets de Streamlit.")
-    else:
-        # URL de la versión 1 (ESTABLE), no la v1beta que te da el error 404
-        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={API_KEY}"
-        
-        headers = {'Content-Type': 'application/json'}
-        
-        # El Prompt con la lógica que pediste (Edad + Pérdida de dinero)
-        prompt_text = (
-            f"Eres un experto en blindaje patrimonial. El cliente tiene {edad} años. "
-            f"Tiene {monto_ahorro} USD en efectivo y estos activos: {activos}. "
-            f"1. Calcula cuánto poder adquisitivo ha perdido su efectivo en los últimos 5 años por inflación (aprox 20% total). "
-            f"2. Explica el riesgo patrimonial según su edad de {edad} años. "
-            f"3. Da 3 pasos urgentes para blindar este patrimonio."
-        )
-
-        payload = {
-            "contents": [{"parts": [{"text": prompt_text}]}]
-        }
-
-        with st.spinner("Calculando impacto financiero..."):
-            try:
-                response = requests.post(url, headers=headers, json=payload)
-                response_data = response.json()
-                
-                # Extraemos la respuesta de la IA
-                if "candidates" in response_data:
-                    texto_ia = response_data["candidates"][0]["content"]["parts"][0]["text"]
-                    st.success("✅ Diagnóstico Generado")
-                    st.markdown("---")
-                    st.markdown(texto_ia)
-                else:
-                    # Si Google responde con otro error, lo mostramos aquí
-                    st.error("Error en la respuesta de Google")
-                    st.json(response_data)
-                    
-            except Exception as e:
-                st.error(f"Fallo de conexión: {str(e)}")
+if st.button("Generar Diagnóstico"):
+    # Lógica de niveles de deuda [cite: 60, 61, 62]
+    ratio_deuda = (pago_deudas / ingreso_mensual) * 100 if ingreso_mensual > 0 else 0
+    nivel_deuda = "Controlada" if ratio_deuda < 30 else "Alarma" if ratio_deuda <= 60 else "Peligrosa"
+    
+    # Prompt para la IA
+    prompt = f"""
+    Eres un consultor financiero experto. Analiza este perfil:
+    Nombre: {nombre}, Edad: {edad} años.
+    Ingresos: {ingreso_mensual}. Deuda: {nivel_deuda} ({ratio_deuda}%).
+    Instrumentos actuales: {seguros}.
+    Gastos: Fijos {gastos_fijos}, Variables {gastos_variables}.
+    
+    Instrucciones:
+    1. Clasifica los gastos usando la Estrategia RAG (Rojo/Amarillo/Verde).
+    2. Aplica la Regla 50-30-20.
+    3. Si tiene Seguro de Auto pero NO tiene PPR o Seguro de Vida, lanza una alerta sobre "asegurar metal vs asegurar libertad".
+    4. Usa un tono motivador pero directo, mencionando que 'El retiro es una certeza'[cite: 191].
+    """
+    
+    respuesta = model.generate_content(prompt)
+    st.markdown(respuesta.text)
