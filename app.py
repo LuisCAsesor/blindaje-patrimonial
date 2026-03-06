@@ -6,7 +6,7 @@ import pandas as pd
 try:
     API_KEY = st.secrets["API_KEY"]
     genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('models/gemini-1.5-flash')
 except:
     st.error("⚠️ Error de Configuración: Falta la API_KEY en los Secrets de Streamlit.")
     st.stop()
@@ -59,3 +59,4 @@ if submit:
     
     res = model.generate_content(prompt)
     st.markdown(res.text)
+
