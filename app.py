@@ -6,7 +6,7 @@ import pandas as pd
 try:
     API_KEY = st.secrets["API_KEY"]
     genai.configure(api_key=API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash-latest')
+model = genai.GenerativeModel('gemini-1.5-flash')
 except:
     st.error("⚠️ Error de Configuración: Falta la API_KEY en los Secrets de Streamlit.")
     st.stop()
@@ -70,4 +70,5 @@ if submit:
         except Exception as e:
             st.error(f"Hubo un problema con la conexión a la IA. Error: {e}")
             st.info("Revisa que tu API_KEY sea válida y que tengas cuota disponible en Google AI Studio.")
+
 
