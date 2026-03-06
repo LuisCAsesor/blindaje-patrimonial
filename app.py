@@ -10,7 +10,94 @@ def get_model():
     try:
         api_key = st.secrets["API_KEY"]
         genai.configure(api_key=api_key)
-        # Intentamos con el modelo flash directo
+        # Intentamos cimport streamlit as st
+import google.generativeai as genai
+import pandas as pd
+
+# 1. Configuración de la App
+st.set_page_config(page_title="Blindaje Patrimonial IA", page_icon="🛡️")
+
+# 2. Conexión a la IA con manejo de errores robusto
+def inicializar_ia():
+    try:
+        if "API_KEY" not in st.secrets:
+            st.error("Falta la API_KEY en Secrets.")
+            return None
+        genai.configure(api_key=st.secrets["API_KEY"])
+        # Usamos Pro para máxima estabilidad y evitar el 404 del Flash
+        return genai.GenerativeModel('gemini-1.5-pro')
+    except Exception as e:
+        st.error(f"Error de configuración: {e}")
+        return None
+
+model = inicializar_ia()
+
+st.title("🛡️ Diagnóstico de Blindaje Patrimonial")
+st.markdown("Analiza tu libertad financiera futura hoy mismo.")
+
+# 3. Formulario de Datos
+with st.form("main_form"):
+    col1, col2 = st.columns(2)
+    with col1:
+        nombre = st.text_input("Nombre Completo")
+        edad = st.number_input("Edad", min_value=18, max_value=100, value=30)
+    with col2:
+        ingreso_anual = st.number_input("Ingreso Anual Total ($)", min_value=0)
+    
+    st.subheader("🚦 Semáforo de Gastos (Anual)")
+    c1, c2, c3 = st.columns(3)
+    with c1: g_verde = st.number_input("Verde (Necesario)", min_value=0)
+    with c2: g_amarillo = st.number_input("Amarillo (Reducible)", min_value=0)
+    with c3: g_rojo = st.number_input("Rojo (Eliminable)", min_value=0)
+    
+    st.subheader("💰 Ahorro y Deuda (Anual)")
+    ahorro = st.number_input("¿Cuánto ahorras al año?", min_value=0)
+    deuda = st.number_input("¿Cuánto pagas de deuda al año?", min_value=0)
+    
+    st.subheader("🛡️ Tus Seguros Actuales")
+    s_auto = st.checkbox("Seguro de Auto")
+    s_vida = st.checkbox("Seguro de Vida")
+    s_retiro = st.checkbox("PPR / Retiro")
+    
+    enviar = st.form_submit_button("GENERAR DIAGNÓSTICO")
+
+# 4. Procesamiento
+if enviar:
+    if not nombre or ingreso_anual <= 0:
+        st.warning("Por favor completa los campos básicos.")
+    elif model:
+        # Lógica de Deuda [cite: 62]
+        pct_deuda = (deuda / ingreso_anual) * 100
+        nivel_d = "Controlada" if pct_deuda < 30 else "Alarma" if pct_deuda <= 60 else "Peligrosa" [cite: 60, 61, 62]
+        pct_ahorro = (ahorro / ingreso_anual) * 100
+
+        prompt = f"""
+        Actúa como experto en Blindaje Patrimonial. Analiza a {nombre} ({edad} años).
+        Ingreso: ${ingreso_anual}, Ahorro: {pct_ahorro:.1f}%, Deuda: {nivel_d} ({pct_deuda:.1f}%).
+        Gastos RAG: Verde ${g_verde}, Amarillo ${g_amarillo}, Rojo ${g_rojo}.
+        Seguros: Auto={s_auto}, Vida={s_vida}, Retiro={s_retiro}.
+
+        REGLAS:
+        - Menciona que en 2050 habrá 36 millones de adultos mayores[cite: 24, 25].
+        - Si tiene seguro de auto pero no retiro/vida, dile: 'Aseguras el metal por si chocas, pero no tu vida por si llegas a viejo'[cite: 190, 191].
+        - Usa la regla 50-30-20: el ahorro e inversión debe ser el 20%[cite: 63, 65].
+        - El retiro es una certeza[cite: 191]. Termina con: 'El segundo mejor momento es hoy'.
+        """
+
+        try:
+            with st.spinner("Generando análisis..."):
+                response = model.generate_content(prompt)
+                st.markdown("---")
+                st.markdown(response.text)
+                
+                # Gráfica Simple
+                df = pd.DataFrame({
+                    "Concepto": ["Ahorro Actual", "Meta (20%)", "Deuda"],
+                    "Porcentaje": [pct_ahorro, 20, pct_deuda]
+                })
+                st.bar_chart(df.set_index("Concepto"))
+        except Exception as e:
+            st.error(f"Error de la IA: {e}. Revisa tu API Key.")on el modelo flash directo
         return genai.GenerativeModel('gemini-1.5-flash')
     except Exception as e:
         st.error(f"Error de configuración: {e}")
@@ -119,3 +206,4 @@ if enviar:
                 st.markdown(response.text)
             except Exception as e2:
                 st.error(f"No se pudo conectar: {e2}")
+
