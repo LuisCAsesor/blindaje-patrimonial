@@ -2,73 +2,111 @@ import streamlit as st
 import google.generativeai as genai
 import pandas as pd
 
-# --- CONFIGURACIÓN SEGURA DE API ---
+# --- CONFIGURACIÓN DE PÁGINA ---
+st.set_page_config(page_title="IA Blindaje Patrimonial", page_icon="🛡️")
+
+# --- CONEXIÓN SEGURA CON GEMINI ---
 try:
     API_KEY = st.secrets["API_KEY"]
     genai.configure(api_key=API_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
-except:
-    st.error("⚠️ Error de Configuración: Falta la API_KEY en los Secrets de Streamlit.")
+    # Nombre de modelo estándar para evitar error 404
+    model = genai.GenerativeModel('gemini-1.5-flash')
+except Exception as e:
+    st.error("⚠️ Error de Configuración: Revisa que la API_KEY esté en los Secrets de Streamlit.")
     st.stop()
 
-# --- EL RESTO DEL CÓDIGO SIGUE IGUAL ---
 st.title("🛡️ Diagnóstico de Blindaje Patrimonial")
+st.markdown("_El secreto para que tu estilo de vida nunca tenga fecha de caducidad._")
 
-with st.sidebar:
-    st.header("Instrucciones")
-    st.write("Completa tus datos para recibir un análisis basado en la metodología de Blindaje Patrimonial.")
+# --- FORMULARIO DE ENTRADA ---
+with st.form("diagnostico_form"):
+    col1, col2 = st.columns(2)
+    with col1:
+        nombre = st.text_input("Nombre Completo")
+        edad = st.number_input("Edad actual", min_value=18, max_value=100, value=30)
+    with col2:
+        ingreso_anual = st.number_input("Ingresos Totales Anuales ($)", min_value=0, step=1000)
 
-# --- FORMULARIO ---
-with st.form("my_form"):
-    nombre = st.text_input("Nombre Completo")
-    edad = st.number_input("Edad", min_value=18, max_value=100, value=30)
-    ingreso_anual = st.number_input("Ingresos Totales Anuales ($)", min_value=0)
-    
-    st.subheader("Tus Gastos Anuales (RAG)")
-    g_verde = st.number_input("Gastos Necesarios (Súper, Vivienda)", min_value=0)
-    g_amarillo = st.number_input("Gastos Variables (Suscripciones, Cine)", min_value=0)
-    g_rojo = st.number_input("Gastos Eliminables (Gastos hormiga, Lujos)", min_value=0)
-    
-    st.subheader("Ahorro y Deuda Anual")
-    ahorro_anual = st.number_input("¿Cuánto ahorras al año?", min_value=0)
-    deuda_anual = st.number_input("¿Cuánto pagas de deudas al año?", min_value=0)
+    st.subheader("🚦 Tus Gastos Anuales (Estrategia RAG)")
+    col_g1, col_g2, col_g3 = st.columns(3)
+    with col_g1:
+        g_verde = st.number_input("VERDE (Necesarios)", help="Súper, Renta, Servicios", min_value=0)
+    with col_g2:
+        g_amarillo = st.number_input("AMARILLO (Reducibles)", help="Restaurantes, Suscripciones", min_value=0)
+    with col_g3:
+        g_rojo = st.number_input("ROJO (Eliminables)", help="Gastos hormiga, lujos innecesarios", min_value=0)
 
-    st.subheader("¿Qué tienes hoy?")
+    st.subheader("💰 Ahorro y Deuda (Monto Anual)")
+    col_ad1, col_ad2 = st.columns(2)
+    with col_ad1:
+        ahorro_anual = st.number_input("Ahorro/Inversión total al año", min_value=0)
+    with col_ad2:
+        deuda_anual = st.number_input("Pago de deudas total al año", min_value=0)
+
+    st.subheader("🛡️ Tus Instrumentos Actuales")
     t_auto = st.checkbox("Seguro de Auto")
+    t_gastos_medicos = st.checkbox("Seguro de Gastos Médicos Mayores")
     t_vida = st.checkbox("Seguro de Vida")
-    t_retiro = st.checkbox("PPR / Afore")
+    t_ppr = st.checkbox("PPR / Afore")
     
-    submit = st.form_submit_button("Generar Diagnóstico")
+    seguros_lista = []
+    if t_auto: seguros_lista.append("Seguro de Auto")
+    if t_gastos_medicos: seguros_lista.append("Gastos Médicos")
+    if t_vida: seguros_lista.append("Seguro de Vida")
+    if t_ppr: seguros_lista.append("PPR/Afore")
 
-if submit:
-    # Validaciones básicas de ingresos [cite: 67]
+    enviar = st.form_submit_button("GENERAR DIAGNÓSTICO")
+
+# --- LÓGICA DE PROCESAMIENTO ---
+if enviar:
     if ingreso_anual <= 0:
-        st.warning("Por favor, ingresa un ingreso anual válido para realizar el cálculo.")
+        st.warning("Por favor, ingresa tus ingresos anuales para continuar.")
     else:
-        # Lógica de deuda basada en niveles de control [cite: 59, 60, 61, 62]
+        # 1. Análisis de Deuda (Página 7 del PDF)
         pct_deuda = (deuda_anual / ingreso_anual) * 100
-        nivel_deuda = "Controlada" if pct_deuda < 30 else "Alarma" if pct_deuda <= 60 else "Peligrosa"
+        if pct_deuda < 30:
+            nivel_d = "CONTROLADA (Menos del 30%)"
+        elif 40 <= pct_deuda <= 60:
+            nivel_d = "ALARMA (Entre 40% y 60%)"
+        else:
+            nivel_d = "PELIGROSA (Más del 60%)"
+
+        # 2. Análisis de Ahorro (Regla 50-30-20 - Página 8)
+        pct_ahorro = (ahorro_anual / ingreso_anual) * 100
         
+        # 3. Prompt con Estrategia de Ventas y Blindaje
         prompt = f"""
-        Genera un diagnóstico financiero para {nombre} de {edad} años.
-        Datos: Ingreso ${ingreso_anual}, Ahorro ${ahorro_anual}, Deuda {nivel_deuda} ({pct_deuda:.1f}%).
-        Seguros: Auto:{t_auto}, Vida:{t_vida}, Retiro:{t_retiro}.
-        Gastos RAG: Verde ${g_verde}, Amarillo ${g_amarillo}, Rojo ${g_rojo}.
+        Actúa como un experto en Blindaje Patrimonial. Analiza a {nombre} ({edad} años).
         
-        Usa estas reglas del Blindaje Patrimonial:
-        - Si tiene seguro de auto pero no de vida o retiro, dile que 'asegura el metal pero no su libertad'[cite: 190, 192].
-        - Menciona que para 2050 habrá 36 millones de adultos mayores y la mayoría dependerá de otros[cite: 3, 18, 25].
-        - Aplica la regla 50-30-20 para recomendar ahorro e inversión[cite: 63, 65].
-        - Explica que el retiro es una certeza, mientras que un accidente es solo probabilidad.
+        CONTEXTO FINANCIERO:
+        - Ingreso Anual: ${ingreso_anual}
+        - Ahorro Anual: ${ahorro_anual} ({pct_ahorro:.1f}%)
+        - Deuda Anual: ${deuda_anual} (Nivel: {nivel_d})
+        - Gastos RAG: Verde ${g_verde}, Amarillo ${g_amarillo}, Rojo ${g_rojo}.
+        - Seguros: {', '.join(seguros_lista) if seguros_lista else 'Ninguno'}.
+
+        INSTRUCCIONES OBLIGATORIAS:
+        1. Explica que la salud financiera es estar 'blindado' para que un imprevisto no te rompa.
+        2. Aplica la Regla 50-30-20. Si el ahorro es menor al 20%, advierte las consecuencias en la vejez.
+        3. Clasificación RAG: Indica qué gastos ROJOS debe eliminar ya para invertirlos en su retiro.
+        4. Alerta 'Metal vs Vida': Si tiene seguro de auto pero NO tiene PPR o Vida, dile: 'Aseguras el metal por si chocas (probabilidad), pero no tu vida por si llegas a viejo (certeza)'.
+        5. Cita que en 2050 habrá 36 millones de adultos mayores y pregúntale: ¿De qué vas a vivir cuando dejes de trabajar?
+        6. Usa un tono directo y profesional. Termina con: 'El segundo mejor momento para empezar es HOY'.
         """
-        
+
         try:
-            with st.spinner("Consultando a tu asesor de IA..."):
-                res = model.generate_content(prompt)
-                st.markdown("### 📊 Tu Diagnóstico Personalizado")
-                st.markdown(res.text)
+            with st.spinner("Calculando tu blindaje..."):
+                response = model.generate_content(prompt)
+                st.markdown("---")
+                st.markdown(response.text)
+                
+                # Visualización rápida
+                st.subheader("Resumen Visual")
+                chart_data = pd.DataFrame({
+                    "Concepto": ["Ahorro Real", "Meta Ahorro (20%)", "Deuda Actual"],
+                    "Porcentaje": [pct_ahorro, 20, pct_deuda]
+                })
+                st.bar_chart(data=chart_data, x="Concepto", y="Porcentaje")
+                
         except Exception as e:
-            st.error(f"Hubo un problema con la conexión a la IA. Error: {e}")
-            st.info("Revisa que tu API_KEY sea válida y que tengas cuota disponible en Google AI Studio.")
-
-
+            st.error(f"Error al conectar con la IA: {e}")
